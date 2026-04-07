@@ -181,6 +181,11 @@ body {
     margin-top: 10px;
 }
 
+.lift-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -331,7 +336,7 @@ function renderSemesterTable(semester, numCourses, courses) {
     }
 
     var tableContainer = document.getElementById(`semester${semester}TableContainer`);
-    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>Grade Points</th><th>Course GPA</th><th>Potential GPA</th></tr></thead><tbody>`;
+    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>Grade Points</th><th>Course GPA</th><th>Potential GPA</th><th>CGPA Lift</th></tr></thead><tbody>`;
 
     for (var i = 0; i < totalRows; i++) {
         var course = courses && courses[i] ? courses[i] : {};
@@ -347,6 +352,7 @@ function renderSemesterTable(semester, numCourses, courses) {
             <td><input type="number" class="form-control grade-points" min="0" step="any" placeholder="e.g. 9" value="${gradePoints}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
             <td><input type="text" class="form-control course-gpa-display" value="${courseGpaDisplay}" readonly></td>
             <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${potential}" placeholder="e.g. 4"></td>
+            <td><span class="badge text-bg-light border lift-badge course-lift-badge">Run Calculate</span></td>
         </tr>`;
     }
 
@@ -374,6 +380,7 @@ function addCourseRow(semester, courseData) {
         <td><input type="number" class="form-control grade-points" min="0" step="any" placeholder="e.g. 9" value="${typeof course.gradePoints === 'number' ? course.gradePoints : ''}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
         <td><input type="text" class="form-control course-gpa-display" value="${courseGpaDisplay}" readonly></td>
         <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>`;
+        <td><span class="badge text-bg-light border lift-badge course-lift-badge">Run Calculate</span></td>`;
     tbody.appendChild(row);
 }
 
@@ -573,6 +580,7 @@ function calculateCGPA() {
     var totalCurrentWxSum = 0;
     var totalMaxWxSum = 0;
     var computedSemesters = 0;
+    var courseLiftRows = [];
 
     for (var i = 1; i <= numSemesters; i++) {
         var semester = i;
@@ -589,6 +597,7 @@ function calculateCGPA() {
             var creditHoursInput = row.querySelector('.credit-hours');
             var gradePointsInput = row.querySelector('.grade-points');
             var potentialGpaInput = row.querySelector('.potential-gpa');
+            var liftBadge = row.querySelector('.course-lift-badge');
             if (!creditHoursInput || !gradePointsInput || !potentialGpaInput) {
                 return;
             }
@@ -609,6 +618,17 @@ function calculateCGPA() {
                 totalCreditHours += creditHours;
                 totalCurrentWx += gradePoints;
                 totalMaxWx += creditHours * effectivePotentialGpa;
+
+                courseLiftRows.push({
+                    row: row,
+                    badge: liftBadge,
+                    creditHours: creditHours,
+                    gpa: gpa,
+                    effectivePotentialGpa: effectivePotentialGpa
+                });
+            } else if (liftBadge) {
+                liftBadge.className = 'badge text-bg-light border lift-badge course-lift-badge';
+                liftBadge.textContent = 'Enter CH';
             }
         });
 
@@ -647,6 +667,33 @@ function calculateCGPA() {
         <div class="result-highlight mt-2">Current CGPA: ${cgpa.toFixed(2)}</div>
         <div class="result-highlight mt-2">Maximum Obtainable CGPA: ${maxObtainableCgpa.toFixed(2)}</div>
         <div class="helper-text mt-2 fw-semibold">Possible improvement: +${possibleGain.toFixed(2)} CGPA points</div>`;
+
+        var maxLift = -1;
+        var maxLiftIndex = -1;
+        for (var k = 0; k < courseLiftRows.length; k++) {
+            var item = courseLiftRows[k];
+            var lift = (item.creditHours * (item.effectivePotentialGpa - item.gpa)) / totalCreditHoursSum;
+            item.lift = lift;
+            if (lift > maxLift) {
+                maxLift = lift;
+                maxLiftIndex = k;
+            }
+        }
+
+        for (var m = 0; m < courseLiftRows.length; m++) {
+            var rowItem = courseLiftRows[m];
+            if (!rowItem.badge) {
+                continue;
+            }
+
+            rowItem.badge.className = 'badge text-bg-light border lift-badge course-lift-badge';
+            rowItem.badge.textContent = '+' + rowItem.lift.toFixed(3) + ' CGPA';
+
+            if (m === maxLiftIndex && rowItem.lift > 0) {
+                rowItem.badge.className = 'badge text-bg-success lift-badge course-lift-badge';
+                rowItem.badge.textContent = 'Top Boost +' + rowItem.lift.toFixed(3);
+            }
+        }
     }
 
     cgpaResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
