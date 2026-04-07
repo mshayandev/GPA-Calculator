@@ -379,7 +379,7 @@ function addCourseRow(semester, courseData) {
         <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${typeof course.creditHours === 'number' ? course.creditHours : ''}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
         <td><input type="number" class="form-control grade-points" min="0" step="any" placeholder="e.g. 9" value="${typeof course.gradePoints === 'number' ? course.gradePoints : ''}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
         <td><input type="text" class="form-control course-gpa-display" value="${courseGpaDisplay}" readonly></td>
-        <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>`;
+        <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>
         <td><span class="badge text-bg-light border lift-badge course-lift-badge">Run Calculate</span></td>`;
     tbody.appendChild(row);
 }
