@@ -84,6 +84,18 @@ body {
     flex-wrap: wrap;
 }
 
+.upload-row {
+    margin-top: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
 .semester-card {
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -111,6 +123,11 @@ body {
 .custom-table thead th {
     background: rgba(20, 110, 245, 0.08);
     border-bottom-width: 1px;
+}
+
+.max-note {
+    color: var(--muted);
+    font-size: 0.88rem;
 }
 
 .custom-table td,
@@ -158,6 +175,10 @@ body {
 .helper-text {
     color: var(--muted);
     font-size: 0.92rem;
+}
+
+.add-course-btn {
+    margin-top: 10px;
 }
 
 @keyframes slideIn {
@@ -213,11 +234,20 @@ body {
             </div>
             <button onclick="initializeSemesters()" class="btn btn-brand px-4">Build Semester Forms</button>
         </div>
+        <div class="upload-row">
+            <label for="transcriptPdf" class="form-label fw-semibold">Upload transcript PDF (optional)</label>
+            <div class="input-row mt-1">
+                <input type="file" id="transcriptPdf" class="form-control" accept=".pdf,application/pdf">
+                <button onclick="loadTranscriptPdf()" class="btn btn-secondary-brand px-4">Auto Fill From PDF</button>
+            </div>
+            <p id="uploadStatus" class="status-text mb-0">You can still edit everything manually and add more courses after auto-fill.</p>
+        </div>
     </div>
 
     <div id="semesterForms" style="display: none;">
     <div class="content-panel">
-        <p class="helper-text mb-3">Set number of courses for each semester, then fill credit hours and GPA values.</p>
+        <p class="helper-text mb-2">Set number of courses for each semester, then fill credit hours and GPA values.</p>
+        <p class="max-note mb-3">Use Potential GPA to estimate the maximum obtainable CGPA by end of term.</p>
         <div id="semesterContainer"></div>
         <div class="center-btn">
             <button onclick="calculateCGPA()" class="btn btn-secondary-brand mt-2 px-4">Calculate CGPA</button>
@@ -230,8 +260,10 @@ body {
                     <tr>
                         <th>Semester</th>
                         <th>Total Credit Hours</th>
-                        <th>Weighted GPA</th>
-                        <th>GPA</th>
+                        <th>Current Weighted GPA</th>
+                        <th>Current GPA</th>
+                        <th>Max Weighted GPA</th>
+                        <th>Max GPA</th>
                     </tr>
                 </thead>
                 <tbody id="cgpaResultBody"></tbody>
@@ -244,8 +276,14 @@ body {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 var numSemesters;
+var defaultPotentialGpa = 4;
+
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 function initializeSemesters() {
     numSemesters = parseInt(document.getElementById('numSemesters').value);
@@ -283,19 +321,214 @@ function createSemesterTable(semester) {
         return;
     }
 
-    var tableContainer = document.getElementById(`semester${semester}TableContainer`);
-    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>GPA</th></tr></thead><tbody>`;
+    renderSemesterTable(semester, numCourses);
+}
 
-    for (var i = 0; i < numCourses; i++) {
+function renderSemesterTable(semester, numCourses, courses) {
+    var totalRows = numCourses;
+    if (courses && courses.length > 0) {
+        totalRows = courses.length;
+    }
+
+    var tableContainer = document.getElementById(`semester${semester}TableContainer`);
+    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>Current GPA</th><th>Potential GPA</th></tr></thead><tbody>`;
+
+    for (var i = 0; i < totalRows; i++) {
+        var course = courses && courses[i] ? courses[i] : {};
+        var name = course.name ? escapeHtml(course.name) : '';
+        var credit = typeof course.creditHours === 'number' ? course.creditHours : '';
+        var gpa = typeof course.currentGpa === 'number' ? course.currentGpa : '';
+        var potential = typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa;
+
         table += `<tr>
-            <td><input type="text" class="form-control" placeholder="Course ${i + 1}"></td>
-            <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3"></td>
-            <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5"></td>
+            <td><input type="text" class="form-control course-name" placeholder="Course ${i + 1}" value="${name}"></td>
+            <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${credit}"></td>
+            <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5" value="${gpa}"></td>
+            <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${potential}" placeholder="e.g. 4"></td>
         </tr>`;
     }
 
-    table += `</tbody></table></div>`;
+    table += `</tbody></table></div>
+    <button onclick="addCourseRow(${semester})" class="btn btn-outline-secondary btn-sm add-course-btn">Add One More Course</button>`;
     tableContainer.innerHTML = table;
+}
+
+function addCourseRow(semester, courseData) {
+    var tbody = document.querySelector(`#semester${semester}TableContainer tbody`);
+    if (!tbody) {
+        createSemesterTable(semester);
+        tbody = document.querySelector(`#semester${semester}TableContainer tbody`);
+        if (!tbody) {
+            return;
+        }
+    }
+
+    var course = courseData || {};
+    var row = document.createElement('tr');
+    row.innerHTML = `
+        <td><input type="text" class="form-control course-name" placeholder="Extra Course" value="${course.name ? escapeHtml(course.name) : ''}"></td>
+        <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${typeof course.creditHours === 'number' ? course.creditHours : ''}"></td>
+        <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5" value="${typeof course.currentGpa === 'number' ? course.currentGpa : ''}"></td>
+        <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>`;
+    tbody.appendChild(row);
+}
+
+async function loadTranscriptPdf() {
+    var uploadStatus = document.getElementById('uploadStatus');
+    var fileInput = document.getElementById('transcriptPdf');
+    var file = fileInput.files[0];
+
+    if (!file) {
+        uploadStatus.textContent = 'Please choose a transcript PDF first.';
+        return;
+    }
+
+    if (!window.pdfjsLib) {
+        uploadStatus.textContent = 'PDF parser could not load. Please refresh and try again.';
+        return;
+    }
+
+    try {
+        uploadStatus.textContent = 'Reading PDF and extracting transcript data...';
+        var buffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        var fullText = '';
+
+        for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+            var page = await pdf.getPage(pageNumber);
+            var textContent = await page.getTextContent();
+            var pageText = textContent.items.map(function(item) {
+                return item.str;
+            }).join(' ');
+            fullText += pageText + '\n';
+        }
+
+        var parsed = parseTranscriptText(fullText);
+        if (!parsed || parsed.totalCourses === 0) {
+            uploadStatus.textContent = 'Could not auto-detect courses from this PDF. You can still enter data manually.';
+            return;
+        }
+
+        autoFillFromTranscript(parsed.semesters);
+        uploadStatus.textContent = `Loaded ${parsed.totalCourses} courses across ${parsed.semesterCount} semester(s). You can now add/edit more courses.`;
+    } catch (error) {
+        uploadStatus.textContent = 'Failed to process this PDF. Please verify the file and try again.';
+    }
+}
+
+function parseTranscriptText(text) {
+    var semesters = {};
+    var currentSemester = 1;
+    var lines = text.split(/\r?\n/);
+
+    lines.forEach(function(rawLine) {
+        var line = rawLine.replace(/\s+/g, ' ').trim();
+        if (!line) {
+            return;
+        }
+
+        var semesterMatch = line.match(/(?:semester|term)\s*[-:]?\s*(\d{1,2})/i);
+        if (semesterMatch) {
+            currentSemester = parseInt(semesterMatch[1], 10) || currentSemester;
+            if (!semesters[currentSemester]) {
+                semesters[currentSemester] = [];
+            }
+            return;
+        }
+
+        var course = parseCourseLine(line);
+        if (!course) {
+            return;
+        }
+
+        if (!semesters[currentSemester]) {
+            semesters[currentSemester] = [];
+        }
+        semesters[currentSemester].push(course);
+    });
+
+    var semesterKeys = Object.keys(semesters);
+    var totalCourses = 0;
+    semesterKeys.forEach(function(key) {
+        totalCourses += semesters[key].length;
+    });
+
+    return {
+        semesters: semesters,
+        semesterCount: semesterKeys.length,
+        totalCourses: totalCourses
+    };
+}
+
+function parseCourseLine(line) {
+    var numbers = line.match(/\d+(?:\.\d+)?/g);
+    if (!numbers || numbers.length < 2) {
+        return null;
+    }
+
+    var gpa = parseFloat(numbers[numbers.length - 1]);
+    var credit = parseFloat(numbers[numbers.length - 2]);
+
+    if (isNaN(gpa) || isNaN(credit)) {
+        return null;
+    }
+
+    if (gpa < 0 || gpa > 4 || credit <= 0 || credit > 10) {
+        return null;
+    }
+
+    var creditToken = numbers[numbers.length - 2];
+    var nameCandidate = line.split(creditToken)[0].replace(/\s+/g, ' ').trim();
+    if (!nameCandidate || nameCandidate.length < 2) {
+        return null;
+    }
+
+    return {
+        name: nameCandidate,
+        creditHours: credit,
+        currentGpa: gpa,
+        potentialGpa: defaultPotentialGpa
+    };
+}
+
+function autoFillFromTranscript(semesters) {
+    var semesterNumbers = Object.keys(semesters).map(function(key) {
+        return parseInt(key, 10);
+    }).filter(function(value) {
+        return !isNaN(value);
+    }).sort(function(a, b) {
+        return a - b;
+    });
+
+    if (semesterNumbers.length === 0) {
+        return;
+    }
+
+    var maxSemester = semesterNumbers[semesterNumbers.length - 1];
+    document.getElementById('numSemesters').value = maxSemester;
+    initializeSemesters();
+
+    semesterNumbers.forEach(function(semester) {
+        var courses = semesters[semester] || [];
+        if (courses.length === 0) {
+            return;
+        }
+
+        var courseInput = document.getElementById(`semester${semester}Courses`);
+        if (courseInput) {
+            courseInput.value = courses.length;
+        }
+        renderSemesterTable(semester, courses.length, courses);
+    });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 function calculateCGPA() {
@@ -307,13 +540,15 @@ function calculateCGPA() {
     totalCGPAResult.innerHTML = '';
 
     var totalCreditHoursSum = 0;
-    var totalWxSum = 0;
+    var totalCurrentWxSum = 0;
+    var totalMaxWxSum = 0;
     var computedSemesters = 0;
 
     for (var i = 1; i <= numSemesters; i++) {
         var semester = i;
         var totalCreditHours = 0;
-        var totalWx = 0;
+        var totalCurrentWx = 0;
+        var totalMaxWx = 0;
         var tableRows = document.querySelectorAll(`#semester${semester}TableContainer tbody tr`);
 
         if (tableRows.length === 0) {
@@ -323,16 +558,26 @@ function calculateCGPA() {
         tableRows.forEach(function(row) {
             var creditHoursInput = row.querySelector('.credit-hours');
             var gpaInput = row.querySelector('.course-gpa');
-            if (!creditHoursInput || !gpaInput) {
+            var potentialGpaInput = row.querySelector('.potential-gpa');
+            if (!creditHoursInput || !gpaInput || !potentialGpaInput) {
                 return;
             }
 
             var creditHours = parseFloat(creditHoursInput.value) || 0;
             var gpa = parseFloat(gpaInput.value) || 0;
+            var potentialGpa = parseFloat(potentialGpaInput.value);
+
+            if (isNaN(potentialGpa)) {
+                potentialGpa = 4;
+            }
+            potentialGpa = Math.min(Math.max(potentialGpa, 0), 4);
+
+            var effectivePotentialGpa = Math.max(gpa, potentialGpa);
 
             if (creditHours > 0) {
                 totalCreditHours += creditHours;
-                totalWx += creditHours * gpa;
+                totalCurrentWx += creditHours * gpa;
+                totalMaxWx += creditHours * effectivePotentialGpa;
             }
         });
 
@@ -340,17 +585,21 @@ function calculateCGPA() {
             continue;
         }
 
-        var gpa = totalWx / totalCreditHours;
+        var gpa = totalCurrentWx / totalCreditHours;
+        var maxGpa = totalMaxWx / totalCreditHours;
         cgpaResultBody.innerHTML += `
         <tr>
             <td>Semester ${semester}</td>
             <td>${totalCreditHours.toFixed(2)}</td>
-            <td>${totalWx.toFixed(2)}</td>
+            <td>${totalCurrentWx.toFixed(2)}</td>
             <td>${gpa.toFixed(2)}</td>
+            <td>${totalMaxWx.toFixed(2)}</td>
+            <td>${maxGpa.toFixed(2)}</td>
         </tr>`;
 
         totalCreditHoursSum += totalCreditHours;
-        totalWxSum += totalWx;
+        totalCurrentWxSum += totalCurrentWx;
+        totalMaxWxSum += totalMaxWx;
         computedSemesters += 1;
     }
 
@@ -360,8 +609,13 @@ function calculateCGPA() {
     }
 
     if (totalCreditHoursSum !== 0) {
-        var cgpa = totalWxSum / totalCreditHoursSum;
-        totalCGPAResult.innerHTML = `<div class="result-highlight mt-2">Total CGPA: ${cgpa.toFixed(2)}</div>`;
+        var cgpa = totalCurrentWxSum / totalCreditHoursSum;
+        var maxObtainableCgpa = totalMaxWxSum / totalCreditHoursSum;
+        var possibleGain = maxObtainableCgpa - cgpa;
+        totalCGPAResult.innerHTML = `
+        <div class="result-highlight mt-2">Current CGPA: ${cgpa.toFixed(2)}</div>
+        <div class="result-highlight mt-2">Maximum Obtainable CGPA: ${maxObtainableCgpa.toFixed(2)}</div>
+        <div class="helper-text mt-2 fw-semibold">Possible improvement: +${possibleGain.toFixed(2)} CGPA points</div>`;
     }
 
     cgpaResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
