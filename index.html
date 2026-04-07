@@ -5,34 +5,227 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CGPA Calculator</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-    .container {
-        margin-top: 50px;
+:root {
+    --bg-1: #fff6e5;
+    --bg-2: #f2f7ff;
+    --ink: #1a1b25;
+    --muted: #576076;
+    --accent: #ff7a18;
+    --accent-2: #146ef5;
+    --card: rgba(255, 255, 255, 0.78);
+    --line: rgba(26, 27, 37, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+        radial-gradient(1100px 500px at -8% -10%, rgba(255, 122, 24, 0.2), transparent 60%),
+        radial-gradient(900px 500px at 108% 8%, rgba(20, 110, 245, 0.2), transparent 58%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    padding: 32px 14px;
+}
+
+.app-shell {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.hero-panel,
+.content-panel,
+.result-panel {
+    backdrop-filter: blur(8px);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(19, 23, 35, 0.08);
+}
+
+.hero-panel {
+    padding: 24px;
+    margin-bottom: 18px;
+    animation: slideIn 0.55s ease;
+}
+
+.content-panel,
+.result-panel {
+    padding: 22px;
+    margin-top: 18px;
+    animation: fadeUp 0.45s ease;
+}
+
+.app-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    margin-bottom: 4px;
+}
+
+.app-subtitle {
+    color: var(--muted);
+    margin: 0;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.semester-card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.semester-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 21, 33, 0.08);
+}
+
+.semester-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.08rem;
+    margin-bottom: 10px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.custom-table thead th {
+    background: rgba(20, 110, 245, 0.08);
+    border-bottom-width: 1px;
+}
+
+.custom-table td,
+.custom-table th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.btn-brand {
+    border: none;
+    background: linear-gradient(120deg, var(--accent), #ff9a4a);
+    color: #fff;
+    font-weight: 700;
+}
+
+.btn-brand:hover {
+    color: #fff;
+    filter: brightness(1.04);
+}
+
+.btn-secondary-brand {
+    border: none;
+    background: linear-gradient(120deg, var(--accent-2), #3b89ff);
+    color: #fff;
+    font-weight: 700;
+}
+
+.btn-secondary-brand:hover {
+    color: #fff;
+    filter: brightness(1.04);
+}
+
+.center-btn {
+    text-align: center;
+}
+
+.result-highlight {
+    padding: 14px 16px;
+    background: linear-gradient(120deg, rgba(255, 122, 24, 0.12), rgba(20, 110, 245, 0.13));
+    border-radius: 14px;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.helper-text {
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
     }
-    .center-btn {
-        text-align: center;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 16px 10px 24px;
+    }
+
+    .hero-panel,
+    .content-panel,
+    .result-panel {
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+    .app-title {
+        font-size: 1.45rem;
+    }
+}
 </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="form-group">
-        <label for="numSemesters">Enter number of semesters:</label>
-        <input type="number" id="numSemesters" class="form-control" min="1" value="1">
-        <button onclick="initializeSemesters()" class="btn btn-primary mt-2">Next</button>
+<div class="app-shell">
+    <div class="hero-panel">
+        <h1 class="app-title">CGPA Calculator</h1>
+        <p class="app-subtitle">Add your semesters and courses to calculate GPA per semester and your final CGPA.</p>
+        <div class="input-row">
+            <div class="flex-grow-1">
+                <label for="numSemesters" class="form-label fw-semibold">Number of semesters</label>
+                <input type="number" id="numSemesters" class="form-control" min="1" value="1">
+            </div>
+            <button onclick="initializeSemesters()" class="btn btn-brand px-4">Build Semester Forms</button>
+        </div>
     </div>
-</div>
 
-<div id="semesterForms" style="display: none;">
-    <div class="container">
+    <div id="semesterForms" style="display: none;">
+    <div class="content-panel">
+        <p class="helper-text mb-3">Set number of courses for each semester, then fill credit hours and GPA values.</p>
         <div id="semesterContainer"></div>
         <div class="center-btn">
-            <button onclick="calculateCGPA()" class="btn btn-success mt-2">Calculate CGPA</button>
+            <button onclick="calculateCGPA()" class="btn btn-secondary-brand mt-2 px-4">Calculate CGPA</button>
         </div>
-        <div id="cgpaResultContainer" style="display: none;">
+        <div id="cgpaResultContainer" class="result-panel" style="display: none;">
             <h2 class="mt-4">Result</h2>
-            <table class="table mt-2">
+            <div class="table-wrap">
+            <table class="table custom-table mt-2">
                 <thead>
                     <tr>
                         <th>Semester</th>
@@ -43,49 +236,65 @@
                 </thead>
                 <tbody id="cgpaResultBody"></tbody>
             </table>
-            <div id="totalCGPAResult"></div>
+            </div>
+            <div id="totalCGPAResult" class="mt-2"></div>
         </div>
     </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
 <script>
 var numSemesters;
-var semesterData = {};
 
 function initializeSemesters() {
     numSemesters = parseInt(document.getElementById('numSemesters').value);
+    if (isNaN(numSemesters) || numSemesters < 1) {
+        alert('Please enter at least 1 semester.');
+        return;
+    }
+
     var semesterForms = document.getElementById('semesterForms');
     semesterForms.style.display = 'block';
     
     var semesterContainer = document.getElementById('semesterContainer');
     semesterContainer.innerHTML = '';
+
     for (var i = 1; i <= numSemesters; i++) {
         semesterContainer.innerHTML += `
-        <div class="mb-4">
-            <h4 class="mb-3">Semester ${i}</h4>
+        <div class="semester-card">
+            <h4 class="semester-title">Semester ${i}</h4>
             <div class="form-group">
                 <label for="semester${i}Courses">Enter number of courses for Semester ${i}:</label>
                 <input type="number" id="semester${i}Courses" class="form-control" min="1" value="1">
-                <button onclick="createSemesterTable(${i})" class="btn btn-primary mt-2">Create Table</button>
+                <button onclick="createSemesterTable(${i})" class="btn btn-brand mt-2">Create Course Table</button>
             </div>
             <div id="semester${i}TableContainer"></div>
         </div>`;
     }
+
+    semesterForms.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function createSemesterTable(semester) {
     var numCourses = parseInt(document.getElementById(`semester${semester}Courses`).value);
+    if (isNaN(numCourses) || numCourses < 1) {
+        alert('Please enter at least 1 course.');
+        return;
+    }
+
     var tableContainer = document.getElementById(`semester${semester}TableContainer`);
-    var table = `<table class="table"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>GPA</th></tr></thead><tbody>`;
+    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>GPA</th></tr></thead><tbody>`;
+
     for (var i = 0; i < numCourses; i++) {
         table += `<tr>
-            <td><input type="text" class="form-control"></td>
-            <td><input type="number" class="form-control credit-hours" data-semester="${semester}"></td>
-            <td><input type="number" class="form-control" step="any"></td>
+            <td><input type="text" class="form-control" placeholder="Course ${i + 1}"></td>
+            <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3"></td>
+            <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5"></td>
         </tr>`;
     }
-    table += `</tbody></table>`;
+
+    table += `</tbody></table></div>`;
     tableContainer.innerHTML = table;
 }
 
@@ -97,24 +306,39 @@ function calculateCGPA() {
     cgpaResultBody.innerHTML = '';
     totalCGPAResult.innerHTML = '';
 
+    var totalCreditHoursSum = 0;
+    var totalWxSum = 0;
+    var computedSemesters = 0;
+
     for (var i = 1; i <= numSemesters; i++) {
         var semester = i;
         var totalCreditHours = 0;
         var totalWx = 0;
-        var tableRows = document.querySelectorAll(`#semester${semester}TableContainer input[type='number']`);
+        var tableRows = document.querySelectorAll(`#semester${semester}TableContainer tbody tr`);
 
         if (tableRows.length === 0) {
-            continue; // Skip if there are no table rows
+            continue;
         }
 
         tableRows.forEach(function(row) {
-            var creditHoursInput = row.parentElement.previousElementSibling.querySelector('.credit-hours');
-            if (!creditHoursInput) return; // Skip if credit hours input is not found
+            var creditHoursInput = row.querySelector('.credit-hours');
+            var gpaInput = row.querySelector('.course-gpa');
+            if (!creditHoursInput || !gpaInput) {
+                return;
+            }
+
             var creditHours = parseFloat(creditHoursInput.value) || 0;
-            var gpa = parseFloat(row.value) || 0;
-            totalCreditHours += creditHours;
-            totalWx += creditHours * gpa;
+            var gpa = parseFloat(gpaInput.value) || 0;
+
+            if (creditHours > 0) {
+                totalCreditHours += creditHours;
+                totalWx += creditHours * gpa;
+            }
         });
+
+        if (totalCreditHours === 0) {
+            continue;
+        }
 
         var gpa = totalWx / totalCreditHours;
         cgpaResultBody.innerHTML += `
@@ -124,22 +348,23 @@ function calculateCGPA() {
             <td>${totalWx.toFixed(2)}</td>
             <td>${gpa.toFixed(2)}</td>
         </tr>`;
+
+        totalCreditHoursSum += totalCreditHours;
+        totalWxSum += totalWx;
+        computedSemesters += 1;
     }
 
-    var totalCreditHoursSum = 0;
-    var totalWxSum = 0;
-    for (var j = 1; j <= numSemesters; j++) {
-        var semesterData = semesterData[j];
-        if (semesterData) {
-            totalCreditHoursSum += semesterData.totalCreditHours;
-            totalWxSum += semesterData.totalWx;
-        }
+    if (computedSemesters === 0) {
+        totalCGPAResult.innerHTML = '<div class="alert alert-warning mb-0">Please enter course values before calculating CGPA.</div>';
+        return;
     }
 
     if (totalCreditHoursSum !== 0) {
         var cgpa = totalWxSum / totalCreditHoursSum;
-        totalCGPAResult.innerHTML = `<h4 class="mt-4">Total CGPA: ${cgpa.toFixed(2)}</h4>`;
+        totalCGPAResult.innerHTML = `<div class="result-highlight mt-2">Total CGPA: ${cgpa.toFixed(2)}</div>`;
     }
+
+    cgpaResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 
