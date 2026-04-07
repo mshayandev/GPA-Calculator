@@ -246,7 +246,7 @@ body {
 
     <div id="semesterForms" style="display: none;">
     <div class="content-panel">
-        <p class="helper-text mb-2">Set number of courses for each semester, then fill credit hours and GPA values.</p>
+        <p class="helper-text mb-2">Set number of courses for each semester, then fill credit hours and grade points.</p>
         <p class="max-note mb-3">Use Potential GPA to estimate the maximum obtainable CGPA by end of term.</p>
         <div id="semesterContainer"></div>
         <div class="center-btn">
@@ -331,19 +331,21 @@ function renderSemesterTable(semester, numCourses, courses) {
     }
 
     var tableContainer = document.getElementById(`semester${semester}TableContainer`);
-    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>Current GPA</th><th>Potential GPA</th></tr></thead><tbody>`;
+    var table = `<div class="table-wrap"><table class="table custom-table mt-3"><thead><tr><th>Course Name</th><th>Credit Hours</th><th>Grade Points</th><th>Course GPA</th><th>Potential GPA</th></tr></thead><tbody>`;
 
     for (var i = 0; i < totalRows; i++) {
         var course = courses && courses[i] ? courses[i] : {};
         var name = course.name ? escapeHtml(course.name) : '';
         var credit = typeof course.creditHours === 'number' ? course.creditHours : '';
-        var gpa = typeof course.currentGpa === 'number' ? course.currentGpa : '';
+        var gradePoints = typeof course.gradePoints === 'number' ? course.gradePoints : '';
         var potential = typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa;
+        var courseGpaDisplay = calculateCourseGpaValue(credit, gradePoints);
 
         table += `<tr>
             <td><input type="text" class="form-control course-name" placeholder="Course ${i + 1}" value="${name}"></td>
-            <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${credit}"></td>
-            <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5" value="${gpa}"></td>
+            <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${credit}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
+            <td><input type="number" class="form-control grade-points" min="0" step="any" placeholder="e.g. 9" value="${gradePoints}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
+            <td><input type="text" class="form-control course-gpa-display" value="${courseGpaDisplay}" readonly></td>
             <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${potential}" placeholder="e.g. 4"></td>
         </tr>`;
     }
@@ -364,13 +366,41 @@ function addCourseRow(semester, courseData) {
     }
 
     var course = courseData || {};
+    var courseGpaDisplay = calculateCourseGpaValue(course.creditHours, course.gradePoints);
     var row = document.createElement('tr');
     row.innerHTML = `
         <td><input type="text" class="form-control course-name" placeholder="Extra Course" value="${course.name ? escapeHtml(course.name) : ''}"></td>
-        <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${typeof course.creditHours === 'number' ? course.creditHours : ''}"></td>
-        <td><input type="number" class="form-control course-gpa" min="0" max="4" step="any" placeholder="e.g. 3.5" value="${typeof course.currentGpa === 'number' ? course.currentGpa : ''}"></td>
+        <td><input type="number" class="form-control credit-hours" min="0" step="any" data-semester="${semester}" placeholder="e.g. 3" value="${typeof course.creditHours === 'number' ? course.creditHours : ''}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control grade-points" min="0" step="any" placeholder="e.g. 9" value="${typeof course.gradePoints === 'number' ? course.gradePoints : ''}" oninput="updateCourseGpaFromRow(this.closest('tr'))"></td>
+        <td><input type="text" class="form-control course-gpa-display" value="${courseGpaDisplay}" readonly></td>
         <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>`;
     tbody.appendChild(row);
+}
+
+function calculateCourseGpaValue(credit, gradePoints) {
+    var ch = parseFloat(credit);
+    var gp = parseFloat(gradePoints);
+
+    if (isNaN(ch) || isNaN(gp) || ch <= 0) {
+        return '';
+    }
+
+    return (gp / ch).toFixed(2);
+}
+
+function updateCourseGpaFromRow(row) {
+    if (!row) {
+        return;
+    }
+
+    var creditInput = row.querySelector('.credit-hours');
+    var gradePointInput = row.querySelector('.grade-points');
+    var gpaDisplayInput = row.querySelector('.course-gpa-display');
+    if (!creditInput || !gradePointInput || !gpaDisplayInput) {
+        return;
+    }
+
+    gpaDisplayInput.value = calculateCourseGpaValue(creditInput.value, gradePointInput.value);
 }
 
 async function loadTranscriptPdf() {
@@ -486,7 +516,7 @@ function parseCourseLine(line) {
     return {
         name: nameCandidate,
         creditHours: credit,
-        currentGpa: gpa,
+        gradePoints: credit * gpa,
         potentialGpa: defaultPotentialGpa
     };
 }
@@ -557,14 +587,15 @@ function calculateCGPA() {
 
         tableRows.forEach(function(row) {
             var creditHoursInput = row.querySelector('.credit-hours');
-            var gpaInput = row.querySelector('.course-gpa');
+            var gradePointsInput = row.querySelector('.grade-points');
             var potentialGpaInput = row.querySelector('.potential-gpa');
-            if (!creditHoursInput || !gpaInput || !potentialGpaInput) {
+            if (!creditHoursInput || !gradePointsInput || !potentialGpaInput) {
                 return;
             }
 
             var creditHours = parseFloat(creditHoursInput.value) || 0;
-            var gpa = parseFloat(gpaInput.value) || 0;
+            var gradePoints = parseFloat(gradePointsInput.value) || 0;
+            var gpa = creditHours > 0 ? gradePoints / creditHours : 0;
             var potentialGpa = parseFloat(potentialGpaInput.value);
 
             if (isNaN(potentialGpa)) {
@@ -576,7 +607,7 @@ function calculateCGPA() {
 
             if (creditHours > 0) {
                 totalCreditHours += creditHours;
-                totalCurrentWx += creditHours * gpa;
+                totalCurrentWx += gradePoints;
                 totalMaxWx += creditHours * effectivePotentialGpa;
             }
         });
