@@ -12,6 +12,11 @@ All notable changes to this project are documented in this file.
 - Per-course CGPA Lift badges after calculation
 - Top Boost highlight for the highest-impact course
 - README and CHANGELOG project documentation
+- Full on-page SEO metadata (description, canonical, robots, Open Graph, Twitter tags)
+- Dynamic JSON-LD structured data (WebSite, WebApplication, FAQPage)
+- SEO content sections: How to calculate CGPA + FAQ
+- Google Analytics 4 integration with custom calculator events
+- `robots.txt` and `sitemap.xml` for crawlability
 
 ### Changed
 - Upgraded UI to a modern responsive design with custom typography, gradients, and card layout

@@ -3,7 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CGPA Calculator</title>
+<title>CGPA Calculator - Free Online GPA & Semester GPA Calculator</title>
+<meta name="description" content="Free CGPA calculator to compute semester GPA, overall CGPA, and maximum obtainable CGPA. Add courses, credit hours, and grade points with instant results.">
+<meta name="keywords" content="cgpa calculator, gpa calculator, semester gpa calculator, cumulative gpa, grade point average calculator, university cgpa tool">
+<meta name="author" content="CGPA Calculator">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="theme-color" content="#146ef5">
+<link rel="canonical" id="canonicalLink" href="">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="CGPA Calculator - Free Online GPA & Semester GPA Calculator">
+<meta property="og:description" content="Calculate semester GPA and final CGPA instantly. Track potential GPA improvements and course-level impact.">
+<meta property="og:url" id="ogUrlMeta" content="">
+<meta property="og:site_name" content="CGPA Calculator">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CGPA Calculator - Free Online GPA & Semester GPA Calculator">
+<meta name="twitter:description" content="A fast online CGPA calculator with semester breakdown, max obtainable CGPA, and transcript PDF auto-fill.">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,6 +197,27 @@ body {
     margin-top: 10px;
 }
 
+.seo-panel {
+    margin-top: 18px;
+    padding: 22px;
+}
+
+.seo-panel h2,
+.seo-panel h3 {
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.seo-panel p,
+.seo-panel li {
+    color: var(--muted);
+}
+
+.faq-item {
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-top: 14px;
+}
+
 .lift-badge {
     font-size: 0.78rem;
     font-weight: 700;
@@ -229,6 +266,7 @@ body {
 <body>
 
 <div class="app-shell">
+    <main>
     <div class="hero-panel">
         <h1 class="app-title">CGPA Calculator</h1>
         <p class="app-subtitle">Add your semesters and courses to calculate GPA per semester and your final CGPA.</p>
@@ -277,6 +315,33 @@ body {
             <div id="totalCGPAResult" class="mt-2"></div>
         </div>
     </div>
+    <section class="content-panel seo-panel" aria-labelledby="about-calculator-title">
+        <h2 id="about-calculator-title">Why Use This CGPA Calculator?</h2>
+        <p>This free online CGPA calculator helps students calculate semester GPA, cumulative GPA (CGPA), and maximum obtainable CGPA based on potential performance. It is useful for planning target grades and understanding which courses can improve your final CGPA the most.</p>
+        <h3>How to Calculate CGPA</h3>
+        <ol>
+            <li>Enter your number of semesters and create course tables.</li>
+            <li>Add each course name, credit hours, and grade points.</li>
+            <li>Click Calculate CGPA to view semester GPA, current CGPA, and maximum obtainable CGPA.</li>
+        </ol>
+    </section>
+
+    <section class="content-panel seo-panel" aria-labelledby="faq-title">
+        <h2 id="faq-title">CGPA Calculator FAQs</h2>
+        <div class="faq-item">
+            <h3>What is CGPA?</h3>
+            <p>CGPA (Cumulative Grade Point Average) is the average of your grade points across all completed semesters, weighted by course credit hours.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How is CGPA different from GPA?</h3>
+            <p>GPA usually refers to performance in a single semester or term, while CGPA covers your overall academic performance across multiple semesters.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I estimate my future CGPA?</h3>
+            <p>Yes. Use the Potential GPA field for each course to estimate your maximum obtainable CGPA and see potential improvement.</p>
+        </div>
+    </section>
+    </main>
 </div>
 </div>
 
@@ -284,10 +349,118 @@ body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 var numSemesters;
+var GA_MEASUREMENT_ID = 'G-1GXX8LPDY4';
+
+setupSeoMeta();
+injectStructuredData();
+initializeAnalytics();
 var defaultPotentialGpa = 4;
 
 if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function setupSeoMeta() {
+    var normalizedUrl = window.location.href.split('#')[0];
+    var canonical = document.getElementById('canonicalLink');
+    var ogUrlMeta = document.getElementById('ogUrlMeta');
+
+    if (canonical) {
+        canonical.href = normalizedUrl;
+    }
+    if (ogUrlMeta) {
+        ogUrlMeta.content = normalizedUrl;
+    }
+}
+
+function injectStructuredData() {
+    var pageUrl = window.location.href.split('#')[0];
+    var schemaData = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                name: 'CGPA Calculator',
+                url: pageUrl,
+                potentialAction: {
+                    '@type': 'SearchAction',
+                    target: pageUrl,
+                    'query-input': 'required name=query'
+                }
+            },
+            {
+                '@type': 'WebApplication',
+                name: 'CGPA Calculator',
+                applicationCategory: 'EducationalApplication',
+                operatingSystem: 'Web',
+                url: pageUrl,
+                description: 'Calculate semester GPA and cumulative CGPA using credit hours and grade points, with max obtainable CGPA projections.'
+            },
+            {
+                '@type': 'FAQPage',
+                mainEntity: [
+                    {
+                        '@type': 'Question',
+                        name: 'What is CGPA?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'CGPA is the weighted average of grade points across all semesters based on course credit hours.'
+                        }
+                    },
+                    {
+                        '@type': 'Question',
+                        name: 'How is CGPA different from GPA?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'GPA usually represents one semester. CGPA represents overall performance across multiple semesters.'
+                        }
+                    },
+                    {
+                        '@type': 'Question',
+                        name: 'Can I estimate my future CGPA?',
+                        acceptedAnswer: {
+                            '@type': 'Answer',
+                            text: 'Yes, use potential GPA values per course to estimate the maximum obtainable CGPA.'
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+
+    var schemaScript = document.createElement('script');
+    schemaScript.type = 'application/ld+json';
+    schemaScript.text = JSON.stringify(schemaData);
+    document.head.appendChild(schemaScript);
+}
+
+function initializeAnalytics() {
+    if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
+        return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function() {
+        dataLayer.push(arguments);
+    };
+
+    var gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_MEASUREMENT_ID);
+    document.head.appendChild(gaScript);
+
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, {
+        page_title: document.title,
+        page_location: window.location.href
+    });
+}
+
+function trackEvent(eventName, params) {
+    if (typeof window.gtag !== 'function') {
+        return;
+    }
+    window.gtag('event', eventName, params || {});
+}
 }
 
 function initializeSemesters() {
@@ -316,6 +489,10 @@ function initializeSemesters() {
         </div>`;
     }
 
+    trackEvent('build_semester_forms', {
+        semester_count: numSemesters
+    });
+
     semesterForms.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -327,6 +504,10 @@ function createSemesterTable(semester) {
     }
 
     renderSemesterTable(semester, numCourses);
+    trackEvent('create_semester_table', {
+        semester_number: semester,
+        course_count: numCourses
+    });
 }
 
 function renderSemesterTable(semester, numCourses, courses) {
@@ -382,6 +563,10 @@ function addCourseRow(semester, courseData) {
         <td><input type="number" class="form-control potential-gpa" min="0" max="4" step="any" value="${typeof course.potentialGpa === 'number' ? course.potentialGpa : defaultPotentialGpa}" placeholder="e.g. 4"></td>
         <td><span class="badge text-bg-light border lift-badge course-lift-badge">Run Calculate</span></td>`;
     tbody.appendChild(row);
+
+    trackEvent('add_course_row', {
+        semester_number: semester
+    });
 }
 
 function calculateCourseGpaValue(credit, gradePoints) {
@@ -447,8 +632,13 @@ async function loadTranscriptPdf() {
         }
 
         autoFillFromTranscript(parsed.semesters);
+        trackEvent('transcript_pdf_autofill_success', {
+            extracted_courses: parsed.totalCourses,
+            extracted_semesters: parsed.semesterCount
+        });
         uploadStatus.textContent = `Loaded ${parsed.totalCourses} courses across ${parsed.semesterCount} semester(s). You can now add/edit more courses.`;
     } catch (error) {
+        trackEvent('transcript_pdf_autofill_failed');
         uploadStatus.textContent = 'Failed to process this PDF. Please verify the file and try again.';
     }
 }
@@ -694,6 +884,14 @@ function calculateCGPA() {
                 rowItem.badge.textContent = 'Top Boost +' + rowItem.lift.toFixed(3);
             }
         }
+
+        trackEvent('cgpa_calculated', {
+            semester_count: computedSemesters,
+            total_credit_hours: Number(totalCreditHoursSum.toFixed(2)),
+            current_cgpa: Number(cgpa.toFixed(2)),
+            max_obtainable_cgpa: Number(maxObtainableCgpa.toFixed(2)),
+            possible_cgpa_gain: Number(possibleGain.toFixed(2))
+        });
     }
 
     cgpaResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });

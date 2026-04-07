@@ -19,6 +19,9 @@ A modern browser-based CGPA calculator with:
 - Per-course impact badge showing estimated CGPA lift
 - Top boost highlighting for the highest-impact course
 - PDF transcript parsing and auto-population (pdf.js)
+- On-page SEO metadata (title, description, social tags)
+- JSON-LD structured data (WebSite, WebApplication, FAQPage)
+- Google Analytics 4 event tracking hooks
 
 ## How It Works
 
@@ -86,6 +89,33 @@ No build step required.
 
 1. Open index.html in a browser
 2. Or serve the folder with any static server
+
+## SEO Setup (Important)
+
+The project includes technical SEO files:
+- `robots.txt`
+- `sitemap.xml`
+
+Before deploying, replace `https://your-domain.com/` in both files with your real domain.
+
+## Analytics Setup (GA4)
+
+Analytics is already wired in the app with custom events. To activate it:
+
+1. Open `index.html`
+2. Find:
+
+  `var GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';`
+
+3. Replace with your real GA4 Measurement ID (example: `G-ABCD1234EF`)
+
+Tracked events include:
+- `build_semester_forms`
+- `create_semester_table`
+- `add_course_row`
+- `transcript_pdf_autofill_success`
+- `transcript_pdf_autofill_failed`
+- `cgpa_calculated`
 
 ## Future Enhancements
 
